@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SectionBreakdownLoadingSkeleton } from "@/components/section-breakdown-skeleton";
+import { VideoChat } from "@/components/VideoChat";
 
 // Type definitions for the API response
 interface Topic {
@@ -13,6 +14,7 @@ interface AnalysisResponse {
   summary: Topic[];
   videoId: string;
   transcriptLength: number;
+  formattedTranscript?: any[];
 }
 
 // Utility function to convert timestamp (MM:SS or HH:MM:SS) to seconds
@@ -129,9 +131,9 @@ export function YouTubeInput() {
             <p className="text-sm text-red-400">{error}</p>
           </div>
         ) : analysisData ? (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-6">
-              <h4 className="text-bold font-medium text-zinc-300 mb-4">
+              <h4 className="text-lg font-medium text-zinc-300 mb-4">
                 Topics & Timestamps
               </h4>
               <div className="space-y-3 max-h-[400px] overflow-y-auto">
@@ -162,6 +164,14 @@ export function YouTubeInput() {
                 )}
               </div>
             </div>
+
+            {/* Video Chat Interface */}
+            {analysisData.formattedTranscript && (
+              <VideoChat
+                videoId={analysisData.videoId}
+                formattedTranscript={analysisData.formattedTranscript}
+              />
+            )}
           </div>
         ) : null}
       </div>

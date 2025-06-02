@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { YoutubeTranscript } from "youtube-transcript";
 import { getGeminiResponse } from "@/utils/geminiClient";
-import { getCachedVideoTranscript, cacheVideoTranscript } from "@/utils/redisClient";
+import {
+  getCachedVideoTranscript,
+  cacheVideoTranscript,
+} from "@/utils/redisClient";
 import { formatTranscriptWithTimestamps } from "@/utils/transcriptFormatter";
 
 // Helper function to extract video ID from YouTube URL
@@ -41,10 +44,10 @@ export async function POST(request: NextRequest) {
 
     // Check if transcript is cached in Redis first
     let transcriptData = await getCachedVideoTranscript(videoId);
-    
+
     if (!transcriptData) {
       console.log("Transcript not found in cache, fetching from YouTube...");
-      
+
       // Fetch transcript from YouTube
       try {
         transcriptData = await YoutubeTranscript.fetchTranscript(videoId);
@@ -61,7 +64,6 @@ export async function POST(request: NextRequest) {
         // Cache the transcript for future requests
         await cacheVideoTranscript(videoId, transcriptData);
         console.log("Transcript cached successfully");
-
       } catch (transcriptError) {
         console.error("Transcript extraction error:", transcriptError);
         return NextResponse.json(
@@ -78,7 +80,11 @@ export async function POST(request: NextRequest) {
 
     // Format transcript into proper sentences with accurate timestamps
     const formattedTranscript = formatTranscriptWithTimestamps(transcriptData);
-    console.log("Formatted transcript into sentences:", formattedTranscript.length, "sentences");
+    console.log(
+      "Formatted transcript into sentences:",
+      formattedTranscript.length,
+      "sentences"
+    );
 
     // Generate content using the formatted transcript
     const prompt = `Based on the following formatted video transcript data, provide a breakdown of the main topics discussed in the video, with timestamps for each topic. The topics should be in the order they are discussed in the video, and should be broad enough to cover the main topics discussed in the video, not super specific ones.
