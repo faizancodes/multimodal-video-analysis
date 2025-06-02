@@ -25,37 +25,6 @@ export default async function Home() {
               <YouTubeInput />
             </div>
           </div>
-
-          {/* Features */}
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-lg border border-white/[0.1] px-5 py-4 bg-white/[0.02]">
-              <h3 className="text-lg font-semibold text-white mb-2">
-                🎥 Video Analysis
-              </h3>
-              <p className="text-sm text-zinc-400">
-                Extract key frames and analyze visual content from YouTube
-                videos.
-              </p>
-            </div>
-
-            <div className="rounded-lg border border-white/[0.1] px-5 py-4 bg-white/[0.02]">
-              <h3 className="text-lg font-semibold text-white mb-2">
-                📝 Transcription
-              </h3>
-              <p className="text-sm text-zinc-400">
-                Generate accurate transcripts and identify key topics discussed.
-              </p>
-            </div>
-
-            <div className="rounded-lg border border-white/[0.1] px-5 py-4 bg-white/[0.02] sm:col-span-2 lg:col-span-1">
-              <h3 className="text-lg font-semibold text-white mb-2">
-                🤖 AI Insights
-              </h3>
-              <p className="text-sm text-zinc-400">
-                Get intelligent summaries and insights powered by multimodal AI.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
