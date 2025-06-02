@@ -6,6 +6,8 @@ const logger = new Logger("Config:Env");
 // Schema for environment variables
 const envSchema = z.object({
   GOOGLE_API_KEY: z.string(),
+  UPSTASH_REDIS_REST_URL: z.string(),
+  UPSTASH_REDIS_REST_TOKEN: z.string(),
 });
 
 // Function to validate environment variables
@@ -14,6 +16,8 @@ const validateEnv = () => {
     logger.info("Validating environment variables");
     const env = {
       GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
+      UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+      UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     };
     logger.debug("Environment variables", {
       hasGoogleApiKey: !!env.GOOGLE_API_KEY,
