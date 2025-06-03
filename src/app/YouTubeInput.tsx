@@ -1,195 +1,30 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import { SectionBreakdownLoadingSkeleton } from "@/components/section-breakdown-skeleton";
 import { VideoChat } from "@/components/VideoChat";
 import { VideoSearch } from "@/components/VideoSearch";
-
-// Type definitions for the API response
-interface Topic {
-  topic: string;
-  timestamp: string;
-}
-
-interface FormattedTranscriptItem {
-  text: string;
-  startTime: number;
-  endTime: number;
-  duration: number;
-  formattedStartTime: string;
-  formattedEndTime: string;
-  lang?: string;
-}
-
-interface AnalysisResponse {
-  summary: Topic[];
-  videoId: string;
-  transcriptLength: number;
-  formattedTranscript?: FormattedTranscriptItem[];
-}
-
-// YouTube Player API types
-declare global {
-  interface Window {
-    YT: any;
-    onYouTubeIframeAPIReady: () => void;
-  }
-}
-
-// Utility function to convert timestamp (MM:SS or HH:MM:SS) to seconds
-function timestampToSeconds(timestamp: string): number {
-  const parts = timestamp.split(":").map(Number);
-
-  if (parts.length === 2) {
-    // MM:SS format
-    return parts[0] * 60 + parts[1];
-  } else if (parts.length === 3) {
-    // HH:MM:SS format
-    return parts[0] * 3600 + parts[1] * 60 + parts[2];
-  }
-
-  return 0; // fallback
-}
-
-// Generate YouTube URL with timestamp
-function getYouTubeUrlWithTimestamp(
-  videoId: string,
-  timestamp: string
-): string {
-  const seconds = timestampToSeconds(timestamp);
-  return `https://www.youtube.com/watch?v=${videoId}&t=${seconds}s`;
-}
+import { useVideoAnalysis } from "@/hooks/useVideoAnalysis";
+import { useYouTubePlayer } from "@/hooks/useYouTubePlayer";
 
 export function YouTubeInput() {
-  const [videoUrl, setVideoUrl] = useState("");
-  const [analysisData, setAnalysisData] = useState<AnalysisResponse | null>(
-    null
-  );
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [player, setPlayer] = useState<any>(null);
-  const [isPlayerReady, setIsPlayerReady] = useState(false);
-  const playerRef = useRef<HTMLDivElement>(null);
+  // Use custom hooks
+  const {
+    videoUrl,
+    setVideoUrl,
+    analysisData,
+    error,
+    isLoading,
+    handleSubmit,
+    resetAnalysis,
+  } = useVideoAnalysis();
 
-  // Load YouTube iframe API
-  useEffect(() => {
-    const loadYouTubeAPI = () => {
-      // Check if API is already loaded
-      if (window.YT && window.YT.Player) {
-        return;
-      }
+  const { isPlayerReady, playerRef, seekToTimestamp } = useYouTubePlayer({
+    videoId: analysisData?.videoId,
+  });
 
-      // Create script tag for YouTube iframe API
-      const script = document.createElement("script");
-      script.src = "https://www.youtube.com/iframe_api";
-      script.async = true;
-      document.head.appendChild(script);
-
-      // Set up the callback for when API is ready
-      window.onYouTubeIframeAPIReady = () => {
-        // API is loaded, player will be created when we have video data
-      };
-    };
-
-    loadYouTubeAPI();
-  }, []);
-
-  // Create YouTube player when analysis data is available
-  useEffect(() => {
-    if (analysisData && window.YT && window.YT.Player && playerRef.current) {
-      const newPlayer = new window.YT.Player(playerRef.current, {
-        height: "400",
-        width: "100%",
-        videoId: analysisData.videoId,
-        playerVars: {
-          autoplay: 0,
-          controls: 1,
-          rel: 0,
-          showinfo: 0,
-          modestbranding: 1,
-        },
-        events: {
-          onReady: () => {
-            setIsPlayerReady(true);
-          },
-          onError: (event: any) => {
-            console.error("YouTube player error:", event.data);
-          },
-        },
-      });
-
-      setPlayer(newPlayer);
-
-      // Cleanup function
-      return () => {
-        if (newPlayer && newPlayer.destroy) {
-          newPlayer.destroy();
-        }
-      };
-    }
-  }, [analysisData]);
-
-  // Cleanup player on unmount
-  useEffect(() => {
-    return () => {
-      if (player && player.destroy) {
-        player.destroy();
-      }
-    };
-  }, [player]);
-
-  const handleSubmit = async () => {
-    if (!videoUrl.trim()) return;
-
-    setIsLoading(true);
-    setError("");
-    setAnalysisData(null);
-    setPlayer(null);
-    setIsPlayerReady(false);
-
-    try {
-      const response = await fetch("/api/video-analysis", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ videoUrl }),
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "An error occurred while analyzing the video.");
-        return;
-      }
-
-      setAnalysisData(data);
-    } catch (error) {
-      console.error("Error analyzing video:", error);
-      setError(
-        "An error occurred while analyzing the video. Please try again."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleTimestampClick = (timestamp: string) => {
-    const seconds = timestampToSeconds(timestamp);
-
-    if (player && isPlayerReady && player.seekTo) {
-      // Seek to the timestamp in the embedded player
-      player.seekTo(seconds, true);
-      player.playVideo();
-    } else {
-      // Fallback to opening in new tab if player isn't ready
-      if (analysisData?.videoId) {
-        const youtubeUrl = getYouTubeUrlWithTimestamp(
-          analysisData.videoId,
-          timestamp
-        );
-        window.open(youtubeUrl, "_blank", "noopener,noreferrer");
-      }
-    }
+  const handleFormSubmit = async () => {
+    resetAnalysis();
+    await handleSubmit();
   };
 
   return (
@@ -231,7 +66,7 @@ export function YouTubeInput() {
 
           <button
             type="button"
-            onClick={handleSubmit}
+            onClick={handleFormSubmit}
             disabled={!videoUrl.trim() || isLoading}
             className="relative w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:from-slate-700 disabled:to-slate-700 disabled:cursor-not-allowed text-white font-semibold rounded-2xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent group overflow-hidden"
           >
@@ -394,7 +229,7 @@ export function YouTubeInput() {
                     >
                       <div className="flex-shrink-0">
                         <button
-                          onClick={() => handleTimestampClick(item.timestamp)}
+                          onClick={() => seekToTimestamp(item.timestamp)}
                           className="relative inline-flex px-3 py-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 hover:from-blue-500/30 hover:to-purple-500/30 text-blue-300 hover:text-blue-200 text-sm font-mono rounded-xl transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/50 group-hover:scale-105"
                           title={
                             isPlayerReady
@@ -441,7 +276,7 @@ export function YouTubeInput() {
               <VideoChat
                 videoId={analysisData.videoId}
                 formattedTranscript={analysisData.formattedTranscript}
-                onTimestampClick={handleTimestampClick}
+                onTimestampClick={seekToTimestamp}
               />
             )}
 
@@ -449,7 +284,7 @@ export function YouTubeInput() {
             <VideoSearch
               videoUrl={videoUrl}
               videoId={analysisData.videoId}
-              onTimestampClick={handleTimestampClick}
+              onTimestampClick={seekToTimestamp}
             />
           </div>
         ) : null}
