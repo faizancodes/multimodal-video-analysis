@@ -9,6 +9,7 @@ const envSchema = z.object({
   UPSTASH_REDIS_REST_URL: z.string(),
   UPSTASH_REDIS_REST_TOKEN: z.string(),
   OPENAI_API_KEY: z.string(),
+  RAPID_API_KEY: z.string(),
 });
 
 // Function to validate environment variables
@@ -20,6 +21,7 @@ const validateEnv = () => {
       UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
       UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
       OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+      RAPID_API_KEY: process.env.RAPID_API_KEY,
     };
     logger.debug("Environment variables", {
       hasGoogleApiKey: !!env.GOOGLE_API_KEY,
