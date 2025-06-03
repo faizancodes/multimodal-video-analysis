@@ -1,23 +1,10 @@
 "use client";
 
-import { useState } from "react";
-
-interface ChatMessage {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-}
-
-interface FormattedTranscriptItem {
-  text: string;
-  startTime: number;
-  endTime: number;
-  duration: number;
-  formattedStartTime: string;
-  formattedEndTime: string;
-  lang?: string;
-}
+import {
+  useVideoChat,
+  type FormattedTranscriptItem,
+} from "../hooks/useVideoChat";
+import { MessageContent } from "./MessageContent";
 
 interface VideoChatProps {
   videoId: string;
@@ -25,181 +12,13 @@ interface VideoChatProps {
   onTimestampClick?: (timestamp: string) => void;
 }
 
-// Utility function to convert timestamp (MM:SS or HH:MM:SS) to seconds
-function timestampToSeconds(timestamp: string): number {
-  const parts = timestamp.split(":").map(Number);
-
-  if (parts.length === 2) {
-    // MM:SS format
-    return parts[0] * 60 + parts[1];
-  } else if (parts.length === 3) {
-    // HH:MM:SS format
-    return parts[0] * 3600 + parts[1] * 60 + parts[2];
-  }
-
-  return 0; // fallback
-}
-
-// Generate YouTube URL with timestamp
-function getYouTubeUrlWithTimestamp(
-  videoId: string,
-  timestamp: string
-): string {
-  const seconds = timestampToSeconds(timestamp);
-  return `https://www.youtube.com/watch?v=${videoId}&t=${seconds}s`;
-}
-
-// Format timestamp for display by removing unnecessary "00:" hour component
-function formatTimestampForDisplay(timestamp: string): string {
-  // Handle time ranges
-  if (timestamp.includes("-")) {
-    const [start, end] = timestamp.split("-");
-    const formattedStart = start.startsWith("00:") ? start.slice(3) : start;
-    const formattedEnd = end.startsWith("00:") ? end.slice(3) : end;
-    return `${formattedStart}-${formattedEnd}`;
-  }
-
-  // Handle single timestamps
-  return timestamp.startsWith("00:") ? timestamp.slice(3) : timestamp;
-}
-
-// Component to render message content with clickable timestamps
-function MessageContent({
-  content,
-  videoId,
-  onTimestampClick,
-}: {
-  content: string;
-  videoId: string;
-  onTimestampClick?: (timestamp: string) => void;
-}) {
-  const handleTimestampClick = (timestamp: string) => {
-    // Extract start time if it's a range (e.g., "00:02:40-00:02:49" -> "00:02:40")
-    const startTime = timestamp.includes("-")
-      ? timestamp.split("-")[0]
-      : timestamp;
-
-    if (onTimestampClick) {
-      onTimestampClick(startTime);
-    } else {
-      // Fallback to opening in new tab
-      const youtubeUrl = getYouTubeUrlWithTimestamp(videoId, startTime);
-      window.open(youtubeUrl, "_blank", "noopener,noreferrer");
-    }
-  };
-
-  // Regex to match timestamps in format [HH:MM:SS], [MM:SS], or time ranges [HH:MM:SS-HH:MM:SS], [MM:SS-MM:SS]
-  const timestampRegex =
-    /\[(\d{1,2}:\d{2}(?::\d{2})?(?:-\d{1,2}:\d{2}(?::\d{2})?)?)\]/g;
-
-  // Split content by timestamps and create clickable elements
-  const parts = [];
-  let lastIndex = 0;
-  let match;
-
-  while ((match = timestampRegex.exec(content)) !== null) {
-    // Add text before timestamp
-    if (match.index > lastIndex) {
-      parts.push(content.slice(lastIndex, match.index));
-    }
-
-    // Add clickable timestamp or time range
-    const timestamp = match[1];
-    const isRange = timestamp.includes("-");
-
-    parts.push(
-      <button
-        key={`${match.index}-${timestamp}`}
-        onClick={() => handleTimestampClick(timestamp)}
-        className="inline-block px-2 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 text-xs font-mono rounded transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:ring-offset-zinc-900 mx-1"
-        title={
-          isRange
-            ? `Click to jump to ${formatTimestampForDisplay(timestamp.split("-")[0])} (start of time range)`
-            : `Click to jump to ${formatTimestampForDisplay(timestamp)} in the video`
-        }
-      >
-        {formatTimestampForDisplay(timestamp)}
-      </button>
-    );
-
-    lastIndex = match.index + match[0].length;
-  }
-
-  // Add remaining text
-  if (lastIndex < content.length) {
-    parts.push(content.slice(lastIndex));
-  }
-
-  return <span className="whitespace-pre-wrap">{parts}</span>;
-}
-
 export function VideoChat({
   videoId,
   formattedTranscript,
   onTimestampClick,
 }: VideoChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputValue, setInputValue] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!inputValue.trim() || isLoading) return;
-
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role: "user",
-      content: inputValue,
-      timestamp: new Date(),
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue("");
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/video-chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question: inputValue,
-          videoId,
-          formattedTranscript,
-          chatHistory: messages,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to get response");
-      }
-
-      const assistantMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.answer,
-        timestamp: new Date(),
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error("Chat error:", error);
-      const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content:
-          "Sorry, I encountered an error while processing your question. Please try again.",
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { messages, inputValue, isLoading, setInputValue, handleSubmit } =
+    useVideoChat({ videoId, formattedTranscript });
 
   return (
     <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-6">
