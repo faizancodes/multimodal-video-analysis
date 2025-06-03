@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Logger } from "@/utils/logger";
 import { generateEmbedding, cosineSimilarity } from "@/utils/embeddingClient";
 import { getCachedVideoEmbeddings } from "@/utils/redisClient";
-// import type { EmbeddingData } from '@/utils/embeddingClient' // Used for type checking
+import { extractVideoId } from "@/utils/video-utils";
 
 const logger = new Logger("VideoSearch");
 
@@ -11,14 +11,6 @@ interface SearchResult {
   timestamp: string;
   similarity: number;
   videoId: string;
-}
-
-// Helper function to extract video ID from YouTube URL
-function extractVideoId(url: string): string | null {
-  const regex =
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|m\.youtube\.com\/watch\?v=|youtube\.com\/watch\?.*&v=)([a-zA-Z0-9_-]{11})/;
-  const match = url.match(regex);
-  return match ? match[1] : null;
 }
 
 export async function POST(request: NextRequest) {

@@ -10,16 +10,9 @@ import {
   cacheVideoEmbeddings,
 } from "@/utils/redisClient";
 import type { EmbeddingData } from "@/utils/embeddingClient";
+import { extractVideoId } from "@/utils/video-utils";
 
 const logger = new Logger("VideoEmbeddings");
-
-// Helper function to extract video ID from YouTube URL
-function extractVideoId(url: string): string | null {
-  const regex =
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|m\.youtube\.com\/watch\?v=|youtube\.com\/watch\?.*&v=)([a-zA-Z0-9_-]{11})/;
-  const match = url.match(regex);
-  return match ? match[1] : null;
-}
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
