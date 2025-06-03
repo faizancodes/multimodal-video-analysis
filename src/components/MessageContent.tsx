@@ -25,10 +25,15 @@ export function MessageContent({
   onTimestampClick,
 }: MessageContentProps) {
   const handleTimestampClick = (timestamp: string) => {
-    // Extract start time if it's a range (e.g., "00:02:40-00:02:49" -> "00:02:40")
-    const startTime = timestamp.includes("-")
-      ? timestamp.split("-")[0]
-      : timestamp;
+    // Extract start time if it's a range
+    // Handle both dash-separated (e.g., "00:02:40-00:02:49") and comma-separated (e.g., "00:02:40, 00:02:49")
+    let startTime = timestamp;
+
+    if (timestamp.includes("-")) {
+      startTime = timestamp.split("-")[0];
+    } else if (timestamp.includes(", ")) {
+      startTime = timestamp.split(", ")[0];
+    }
 
     if (onTimestampClick) {
       onTimestampClick(startTime);
@@ -44,8 +49,9 @@ export function MessageContent({
     const elements: ParsedElement[] = [];
 
     // Regex patterns for different formatting types
+    // Updated to handle both dash-separated and comma-separated timestamp ranges
     const timestampRegex =
-      /\[(\d{1,2}:\d{2}(?::\d{2})?(?:-\d{1,2}:\d{2}(?::\d{2})?)?)\]/g;
+      /\[(\d{1,2}:\d{2}(?::\d{2})?(?:(?:-|, )\d{1,2}:\d{2}(?::\d{2})?)?)\]/g;
     const boldRegex = /\*\*(.*?)\*\*/g;
 
     // Find all matches with their positions
@@ -128,7 +134,7 @@ export function MessageContent({
     switch (element.type) {
       case "timestamp":
         const timestamp = element.content;
-        const isRange = timestamp.includes("-");
+        const isRange = timestamp.includes("-") || timestamp.includes(", ");
 
         return (
           <button
@@ -137,7 +143,11 @@ export function MessageContent({
             className="inline-block px-2 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 text-xs font-mono rounded transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:ring-offset-zinc-900 mx-1"
             title={
               isRange
-                ? `Click to jump to ${formatTimestampForDisplay(timestamp.split("-")[0])} (start of time range)`
+                ? `Click to jump to ${formatTimestampForDisplay(
+                    timestamp.includes("-")
+                      ? timestamp.split("-")[0]
+                      : timestamp.split(", ")[0]
+                  )} (start of time range)`
                 : `Click to jump to ${formatTimestampForDisplay(timestamp)} in the video`
             }
           >
