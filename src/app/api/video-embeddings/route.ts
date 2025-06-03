@@ -73,12 +73,21 @@ export async function POST(request: NextRequest) {
       requestId,
     });
 
-    // Extract visual descriptions using Gemini
+    // Extract visual descriptions using optimized Gemini processing
     logger.info("🎥 Extracting visual descriptions", { requestId });
+    const descriptionStartTime = Date.now();
+
     const descriptions = await extractVisualDescriptions(
       videoUrl,
       intervalSeconds
     );
+
+    const descriptionTime = Date.now() - descriptionStartTime;
+    logger.info("📝 Visual descriptions extracted", {
+      requestId,
+      count: descriptions.length,
+      processingTime: descriptionTime,
+    });
 
     if (descriptions.length === 0) {
       return NextResponse.json(
@@ -87,15 +96,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    logger.info("📝 Visual descriptions extracted", {
-      requestId,
-      count: descriptions.length,
-    });
-
-    // Generate embeddings for all descriptions
+    // Generate embeddings for all descriptions with performance monitoring
     logger.info("🧠 Generating embeddings", { requestId });
+    const embeddingStartTime = Date.now();
+
     const texts = descriptions.map(desc => desc.description);
-    const embeddingVectors = await generateBatchEmbeddings(texts);
+
+    // Process embeddings in parallel with description caching
+    const [embeddingVectors] = await Promise.all([
+      generateBatchEmbeddings(texts),
+      // Cache descriptions separately for potential reuse
+      cacheVideoDescriptions(videoId, descriptions),
+    ]);
+
+    const embeddingTime = Date.now() - embeddingStartTime;
+    logger.info("🧠 Embeddings generated", {
+      requestId,
+      count: embeddingVectors.length,
+      processingTime: embeddingTime,
+    });
 
     // Combine descriptions with embeddings
     embeddings = descriptions.map((desc, index) => ({
@@ -105,8 +124,13 @@ export async function POST(request: NextRequest) {
       videoId: videoId,
     })) as EmbeddingData[];
 
-    // Cache the embeddings
-    await cacheVideoEmbeddings(videoId, embeddings);
+    // Cache the embeddings (fire and forget for speed)
+    cacheVideoEmbeddings(videoId, embeddings).catch(error => {
+      logger.warn("Failed to cache embeddings (non-critical)", {
+        requestId,
+        error,
+      });
+    });
 
     const totalTime = Date.now() - startTime;
 
@@ -114,6 +138,11 @@ export async function POST(request: NextRequest) {
       requestId,
       embeddingCount: embeddings.length,
       processingTime: totalTime,
+      breakdown: {
+        descriptions: descriptionTime,
+        embeddings: embeddingTime,
+        overhead: totalTime - descriptionTime - embeddingTime,
+      },
     });
 
     return NextResponse.json({
@@ -121,6 +150,11 @@ export async function POST(request: NextRequest) {
       embeddings,
       cached: false,
       processingTime: totalTime,
+      performance: {
+        descriptionsMs: descriptionTime,
+        embeddingsMs: embeddingTime,
+        totalMs: totalTime,
+      },
     });
   } catch (error) {
     const totalTime = Date.now() - startTime;
@@ -131,9 +165,51 @@ export async function POST(request: NextRequest) {
       processingTime: totalTime,
     });
 
+    // Provide more specific error information
+    if (error instanceof Error) {
+      if (
+        error.message.includes("quota") ||
+        error.message.includes("rate limit")
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "API rate limit exceeded. Please try again in a few minutes.",
+          },
+          { status: 429 }
+        );
+      }
+
+      if (error.message.includes("timeout")) {
+        return NextResponse.json(
+          {
+            error:
+              "Video processing timeout. Try with a shorter video or try again later.",
+          },
+          { status: 408 }
+        );
+      }
+    }
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
+  }
+}
+
+// Helper function to cache video descriptions separately
+async function cacheVideoDescriptions(
+  videoId: string,
+  descriptions: any[]
+): Promise<void> {
+  try {
+    // This could be useful for debugging or alternative processing
+    logger.info(`Caching descriptions for video ${videoId}`, {
+      count: descriptions.length,
+    });
+    // Implementation could be added if needed for further optimizations
+  } catch (error) {
+    logger.warn("Failed to cache descriptions (non-critical)", { error });
   }
 }

@@ -1,168 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
-interface SearchResult {
-  text: string;
-  timestamp: string;
-  similarity: number;
-  videoId: string;
-}
+import { useVideoSearch } from "../hooks/useVideoSearch";
 
 interface VideoSearchProps {
   videoUrl: string;
   videoId: string;
 }
 
-// Utility function to convert timestamp (MM:SS or HH:MM:SS) to seconds
-function timestampToSeconds(timestamp: string): number {
-  const parts = timestamp.split(":").map(Number);
-
-  if (parts.length === 2) {
-    // MM:SS format
-    return parts[0] * 60 + parts[1];
-  } else if (parts.length === 3) {
-    // HH:MM:SS format
-    return parts[0] * 3600 + parts[1] * 60 + parts[2];
-  }
-
-  return 0; // fallback
-}
-
-// Generate YouTube URL with timestamp
-function getYouTubeUrlWithTimestamp(
-  videoId: string,
-  timestamp: string
-): string {
-  const seconds = timestampToSeconds(timestamp);
-  return `https://www.youtube.com/watch?v=${videoId}&t=${seconds}s`;
-}
-
 export function VideoSearch({ videoUrl, videoId }: VideoSearchProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [isLoadingEmbeddings, setIsLoadingEmbeddings] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const [hasEmbeddings, setHasEmbeddings] = useState(false);
-  const [error, setError] = useState("");
-  const [isCheckingEmbeddings, setIsCheckingEmbeddings] = useState(true);
-
-  // Check if embeddings already exist when component mounts
-  useEffect(() => {
-    const checkExistingEmbeddings = async () => {
-      try {
-        const response = await fetch("/api/video-search", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            query: "test", // Dummy query just to check if embeddings exist
-            videoUrl,
-            maxResults: 1,
-          }),
-        });
-
-        if (response.ok) {
-          setHasEmbeddings(true);
-        }
-      } catch {
-        // If embeddings don't exist, we'll show the generate button
-        console.log("No existing embeddings found");
-      } finally {
-        setIsCheckingEmbeddings(false);
-      }
-    };
-
-    checkExistingEmbeddings();
-  }, [videoUrl]);
-
-  const generateEmbeddings = async () => {
-    setIsLoadingEmbeddings(true);
-    setError("");
-
-    try {
-      const response = await fetch("/api/video-embeddings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          videoUrl,
-          intervalSeconds: 30, // Extract descriptions every 30 seconds
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to generate embeddings");
-      }
-
-      setHasEmbeddings(true);
-      console.log("Embeddings generated:", data);
-    } catch (error) {
-      console.error("Error generating embeddings:", error);
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to generate video embeddings. Please try again."
-      );
-    } finally {
-      setIsLoadingEmbeddings(false);
-    }
-  };
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!searchQuery.trim()) return;
-
-    setIsSearching(true);
-    setError("");
-
-    try {
-      const response = await fetch("/api/video-search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: searchQuery,
-          videoUrl,
-          minSimilarity: 0.3, // Lower threshold for broader results
-          maxResults: 10,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Search failed");
-      }
-
-      setSearchResults(data.results);
-    } catch (error) {
-      console.error("Search error:", error);
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Search failed. Please try again."
-      );
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleTimestampClick = (timestamp: string) => {
-    const youtubeUrl = getYouTubeUrlWithTimestamp(videoId, timestamp);
-    window.open(youtubeUrl, "_blank", "noopener,noreferrer");
-  };
+  const {
+    searchQuery,
+    setSearchQuery,
+    searchResults,
+    isLoadingEmbeddings,
+    isSearching,
+    hasEmbeddings,
+    error,
+    isCheckingEmbeddings,
+    generationProgress,
+    generateEmbeddings,
+    handleSearch,
+    handleTimestampClick,
+  } = useVideoSearch({ videoUrl, videoId });
 
   return (
     <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-6">
       <h4 className="text-lg font-medium text-zinc-300 mb-4">
         Visual Video Search
+        {generationProgress && (
+          <span className="ml-2 text-sm font-normal text-blue-400">
+            (Optimized Processing)
+          </span>
+        )}
       </h4>
 
       {isCheckingEmbeddings && (
@@ -179,10 +48,40 @@ export function VideoSearch({ videoUrl, videoId }: VideoSearchProps) {
       {!isCheckingEmbeddings && !hasEmbeddings && (
         <div className="mb-6">
           <p className="text-sm text-zinc-400 mb-4">
-            First, generate visual embeddings to enable search functionality.
-            This will analyze the video&apos;s visual content at regular
-            intervals.
+            Generate visual embeddings to enable search functionality.
           </p>
+
+          {generationProgress && (
+            <div className="mb-4 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-zinc-300">{generationProgress.step}</span>
+                <span className="text-zinc-400">
+                  {Math.round(generationProgress.progress)}%
+                </span>
+              </div>
+              <div className="w-full bg-zinc-700 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${generationProgress.progress}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-xs text-zinc-500">
+                <span>
+                  Elapsed: {Math.round(generationProgress.timeElapsed / 1000)}s
+                </span>
+                {generationProgress.estimatedTimeRemaining && (
+                  <span>
+                    Est. remaining:{" "}
+                    {Math.round(
+                      generationProgress.estimatedTimeRemaining / 1000
+                    )}
+                    s
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           <button
             onClick={generateEmbeddings}
             disabled={isLoadingEmbeddings}
