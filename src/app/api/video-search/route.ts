@@ -13,6 +13,8 @@ interface SearchResult {
   videoId: string;
 }
 
+export const maxDuration = 300;
+
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
   const requestId = `search_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
