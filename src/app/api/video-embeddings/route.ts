@@ -88,9 +88,25 @@ export async function POST(request: NextRequest) {
     });
 
     if (descriptions.length === 0) {
+      logger.warn(
+        "No visual descriptions extracted, checking if this is a processing error",
+        {
+          requestId,
+          videoId,
+        }
+      );
+
       return NextResponse.json(
-        { error: "No visual descriptions could be extracted from the video" },
-        { status: 404 }
+        {
+          error:
+            "No visual descriptions could be extracted from the video. This may be due to video format, length, or content issues.",
+          suggestions: [
+            "Try with a shorter video (under 10 minutes)",
+            "Ensure the video has clear visual content",
+            "Try again as this may be a temporary processing issue",
+          ],
+        },
+        { status: 422 }
       );
     }
 
@@ -100,12 +116,8 @@ export async function POST(request: NextRequest) {
 
     const texts = descriptions.map(desc => desc.description);
 
-    // Process embeddings in parallel with description caching
-    const [embeddingVectors] = await Promise.all([
-      generateBatchEmbeddings(texts),
-      // Cache descriptions separately for potential reuse
-      cacheVideoDescriptions(videoId, descriptions),
-    ]);
+    // Generate embeddings for all descriptions
+    const embeddingVectors = await generateBatchEmbeddings(texts);
 
     const embeddingTime = Date.now() - embeddingStartTime;
     logger.info("🧠 Embeddings generated", {
@@ -187,27 +199,22 @@ export async function POST(request: NextRequest) {
           { status: 408 }
         );
       }
+
+      if (error.message.includes("JSON") || error.message.includes("parse")) {
+        return NextResponse.json(
+          {
+            error:
+              "Video analysis response could not be processed. Please try again or contact support.",
+            details: "JSON parsing error in video description extraction",
+          },
+          { status: 422 }
+        );
+      }
     }
 
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
-  }
-}
-
-// Helper function to cache video descriptions separately
-async function cacheVideoDescriptions(
-  videoId: string,
-  descriptions: VisualDescription[]
-): Promise<void> {
-  try {
-    // This could be useful for debugging or alternative processing
-    logger.info(`Caching descriptions for video ${videoId}`, {
-      count: descriptions.length,
-    });
-    // Implementation could be added if needed for further optimizations
-  } catch (error) {
-    logger.warn("Failed to cache descriptions (non-critical)", { error });
   }
 }
