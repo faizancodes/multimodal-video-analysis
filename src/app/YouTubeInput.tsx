@@ -5,7 +5,6 @@ import { SectionBreakdownLoadingSkeleton } from "@/components/SectionBreakdownSk
 import { VideoUrlForm } from "@/components/VideoUrlForm";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { AnalysisResults } from "@/components/AnalysisResults";
-import { TranscriptLoadingIndicator } from "@/components/TranscriptLoadingIndicator";
 import { ChatVideoInterface } from "@/components/ChatVideoInterface";
 import { useVideoAnalysis } from "@/hooks/useVideoAnalysis";
 import { useYouTubePlayer } from "@/hooks/useYouTubePlayer";
@@ -58,9 +57,6 @@ export function YouTubeInput() {
         onStartChat={handleStartChat}
         onBackToForm={handleBackToForm}
       />
-
-      {/* Loading State for Transcript */}
-      <TranscriptLoadingIndicator isLoading={isLoadingTranscript} />
 
       {/* Transcript Error */}
       {transcriptError && <ErrorDisplay error={transcriptError} />}

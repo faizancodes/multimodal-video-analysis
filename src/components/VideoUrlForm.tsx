@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 interface VideoUrlFormProps {
   videoUrl: string;
   onVideoUrlChange: (url: string) => void;
@@ -191,7 +193,7 @@ export function VideoUrlForm({
 
                 {/* Video thumbnail */}
                 <div className="relative w-full aspect-video overflow-hidden">
-                  <img
+                  <Image
                     src={video.thumbnail}
                     alt={video.title}
                     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"

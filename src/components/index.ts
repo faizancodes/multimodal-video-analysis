@@ -1,5 +1,4 @@
 // Loading and UI Components
-export { TranscriptLoadingIndicator } from "./TranscriptLoadingIndicator";
 export { ChatVideoPlayer } from "./ChatVideoPlayer";
 export { ChatVideoInterface } from "./ChatVideoInterface";
 

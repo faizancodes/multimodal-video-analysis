@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import { VideoChat } from "@/components/VideoChat";
 import { ChatVideoPlayer } from "@/components/ChatVideoPlayer";
 import type { FormattedTranscriptItem } from "@/types/video-analysis";
@@ -25,7 +26,15 @@ export function ChatVideoInterface({
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.6,
+        ease: [0.22, 1, 0.36, 1], // Custom easing for smooth animation
+      }}
+      className="space-y-6"
+    >
       {/* Video Player for Chat */}
       <ChatVideoPlayer playerRef={playerRef} isPlayerReady={isPlayerReady} />
 
@@ -35,6 +44,6 @@ export function ChatVideoInterface({
         formattedTranscript={chatTranscript}
         onTimestampClick={onTimestampClick}
       />
-    </div>
+    </motion.div>
   );
 }
