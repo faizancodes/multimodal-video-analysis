@@ -41,7 +41,7 @@ export function YouTubeInput() {
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <svg
-                  className="w-5 h-5 text-slate-500"
+                  className="w-5 h-5 text-blue-400"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -145,22 +145,6 @@ export function YouTubeInput() {
           <div className="space-y-8">
             {/* YouTube Video Embed */}
             <div className="relative bg-gradient-to-br from-white/[0.02] to-white/[0.01] border border-white/[0.08] rounded-3xl p-8 backdrop-blur-sm">
-              <div className="mb-6">
-                <h3 className="text-xl font-semibold text-white flex items-center space-x-2">
-                  <svg
-                    className="w-5 h-5 text-blue-400"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span>Video Player</span>
-                </h3>
-              </div>
               <div
                 className="relative w-full rounded-2xl overflow-hidden"
                 style={{ paddingBottom: "56.25%" }}

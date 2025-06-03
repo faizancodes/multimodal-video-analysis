@@ -35,11 +35,6 @@ export function VideoSearch({
     <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-6">
       <h4 className="text-lg font-medium text-zinc-300 mb-4">
         Visual Video Search
-        {generationProgress && (
-          <span className="ml-2 text-sm font-normal text-blue-400">
-            (Optimized Processing)
-          </span>
-        )}
       </h4>
 
       {isCheckingEmbeddings && (

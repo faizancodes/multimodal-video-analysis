@@ -11,7 +11,14 @@ interface MessageContentProps {
   onTimestampClick?: (timestamp: string) => void;
 }
 
-// Component to render message content with clickable timestamps
+interface ParsedElement {
+  type: "text" | "timestamp" | "bold";
+  content: string;
+  originalText?: string;
+  index: number;
+}
+
+// Component to render message content with clickable timestamps and bold formatting
 export function MessageContent({
   content,
   videoId,
@@ -32,47 +39,130 @@ export function MessageContent({
     }
   };
 
-  // Regex to match timestamps in format [HH:MM:SS], [MM:SS], or time ranges [HH:MM:SS-HH:MM:SS], [MM:SS-MM:SS]
-  const timestampRegex =
-    /\[(\d{1,2}:\d{2}(?::\d{2})?(?:-\d{1,2}:\d{2}(?::\d{2})?)?)\]/g;
+  // Parse content to identify all formatting elements
+  const parseContent = (text: string): ParsedElement[] => {
+    const elements: ParsedElement[] = [];
 
-  // Split content by timestamps and create clickable elements
-  const parts = [];
-  let lastIndex = 0;
-  let match;
+    // Regex patterns for different formatting types
+    const timestampRegex =
+      /\[(\d{1,2}:\d{2}(?::\d{2})?(?:-\d{1,2}:\d{2}(?::\d{2})?)?)\]/g;
+    const boldRegex = /\*\*(.*?)\*\*/g;
 
-  while ((match = timestampRegex.exec(content)) !== null) {
-    // Add text before timestamp
-    if (match.index > lastIndex) {
-      parts.push(content.slice(lastIndex, match.index));
+    // Find all matches with their positions
+    const allMatches: Array<{
+      type: "timestamp" | "bold";
+      match: RegExpExecArray;
+      content: string;
+    }> = [];
+
+    // Find timestamp matches
+    let match;
+    while ((match = timestampRegex.exec(text)) !== null) {
+      allMatches.push({
+        type: "timestamp",
+        match,
+        content: match[1],
+      });
     }
 
-    // Add clickable timestamp or time range
-    const timestamp = match[1];
-    const isRange = timestamp.includes("-");
+    // Find bold text matches
+    while ((match = boldRegex.exec(text)) !== null) {
+      allMatches.push({
+        type: "bold",
+        match,
+        content: match[1],
+      });
+    }
 
-    parts.push(
-      <button
-        key={`${match.index}-${timestamp}`}
-        onClick={() => handleTimestampClick(timestamp)}
-        className="inline-block px-2 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 text-xs font-mono rounded transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:ring-offset-zinc-900 mx-1"
-        title={
-          isRange
-            ? `Click to jump to ${formatTimestampForDisplay(timestamp.split("-")[0])} (start of time range)`
-            : `Click to jump to ${formatTimestampForDisplay(timestamp)} in the video`
+    // Sort matches by position
+    allMatches.sort((a, b) => a.match.index - b.match.index);
+
+    // Parse text with all formatting
+    let lastIndex = 0;
+
+    allMatches.forEach((matchInfo, index) => {
+      const { type, match, content } = matchInfo;
+
+      // Add text before this match
+      if (match.index > lastIndex) {
+        const textContent = text.slice(lastIndex, match.index);
+        if (textContent) {
+          elements.push({
+            type: "text",
+            content: textContent,
+            index: lastIndex,
+          });
         }
-      >
-        {formatTimestampForDisplay(timestamp)}
-      </button>
-    );
+      }
 
-    lastIndex = match.index + match[0].length;
-  }
+      // Add the formatted element
+      elements.push({
+        type,
+        content,
+        originalText: match[0],
+        index: match.index,
+      });
 
-  // Add remaining text
-  if (lastIndex < content.length) {
-    parts.push(content.slice(lastIndex));
-  }
+      lastIndex = match.index + match[0].length;
+    });
 
-  return <span className="whitespace-pre-wrap">{parts}</span>;
+    // Add remaining text
+    if (lastIndex < text.length) {
+      const remainingText = text.slice(lastIndex);
+      if (remainingText) {
+        elements.push({
+          type: "text",
+          content: remainingText,
+          index: lastIndex,
+        });
+      }
+    }
+
+    return elements;
+  };
+
+  // Render parsed elements
+  const renderElement = (element: ParsedElement, index: number) => {
+    const key = `${element.type}-${element.index}-${index}`;
+
+    switch (element.type) {
+      case "timestamp":
+        const timestamp = element.content;
+        const isRange = timestamp.includes("-");
+
+        return (
+          <button
+            key={key}
+            onClick={() => handleTimestampClick(timestamp)}
+            className="inline-block px-2 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 hover:text-blue-300 text-xs font-mono rounded transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:ring-offset-zinc-900 mx-1"
+            title={
+              isRange
+                ? `Click to jump to ${formatTimestampForDisplay(timestamp.split("-")[0])} (start of time range)`
+                : `Click to jump to ${formatTimestampForDisplay(timestamp)} in the video`
+            }
+          >
+            {formatTimestampForDisplay(timestamp)}
+          </button>
+        );
+
+      case "bold":
+        return (
+          <strong key={key} className="font-semibold text-white">
+            {element.content}
+          </strong>
+        );
+
+      case "text":
+      default:
+        return element.content;
+    }
+  };
+
+  const parsedElements = parseContent(content);
+
+  return (
+    <span className="whitespace-pre-wrap">
+      {parsedElements.map((element, index) => renderElement(element, index))}
+    </span>
+  );
 }
