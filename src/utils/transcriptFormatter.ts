@@ -24,6 +24,45 @@ export function formatTranscriptIntoSentences(
     return [];
   }
 
+  // Validate and sanitize transcript data
+  const validatedTranscript = transcript.filter((item, index) => {
+    if (!item || typeof item !== "object") {
+      console.error(`Invalid transcript item at index ${index}:`, item);
+      return false;
+    }
+
+    if (typeof item.text !== "string") {
+      console.error(`Invalid text property at index ${index}:`, {
+        text: item.text,
+        type: typeof item.text,
+        item,
+      });
+      return false;
+    }
+
+    if (typeof item.offset !== "number" || typeof item.duration !== "number") {
+      console.error(`Invalid timing properties at index ${index}:`, {
+        offset: item.offset,
+        duration: item.duration,
+        item,
+      });
+      return false;
+    }
+
+    return true;
+  });
+
+  if (validatedTranscript.length === 0) {
+    console.error("No valid transcript items found after validation");
+    return [];
+  }
+
+  if (validatedTranscript.length !== transcript.length) {
+    console.warn(
+      `Filtered ${transcript.length - validatedTranscript.length} invalid transcript items`
+    );
+  }
+
   const sentences: FormattedSentence[] = [];
   let currentSentence = "";
   let sentenceStartTime = 0;
@@ -31,6 +70,16 @@ export function formatTranscriptIntoSentences(
 
   // Helper function to decode HTML entities
   function decodeHtmlEntities(text: string): string {
+    // Add type checking to handle potential data corruption from cache
+    if (typeof text !== "string") {
+      console.error(
+        "decodeHtmlEntities received non-string value:",
+        typeof text,
+        text
+      );
+      return String(text || "");
+    }
+
     return text
       .replace(/&amp;/g, "&")
       .replace(/&#39;/g, "'")
@@ -93,8 +142,19 @@ export function formatTranscriptIntoSentences(
   }
 
   // Process each transcript item
-  for (let i = 0; i < transcript.length; i++) {
-    const item = transcript[i];
+  for (let i = 0; i < validatedTranscript.length; i++) {
+    const item = validatedTranscript[i];
+
+    // Debug: Log item structure for the first few items
+    if (i < 3) {
+      console.log(`Transcript item ${i}:`, {
+        text: item.text,
+        textType: typeof item.text,
+        itemStructure: Object.keys(item),
+        fullItem: item,
+      });
+    }
+
     const decodedText = decodeHtmlEntities(item.text);
     const trimmedText = decodedText.trim();
 
@@ -171,7 +231,7 @@ export function formatTranscriptIntoSentences(
 
   // Handle any remaining text that didn't end with punctuation
   if (currentSentence.trim() && hasStartedSentence) {
-    const lastItem = transcript[transcript.length - 1];
+    const lastItem = validatedTranscript[validatedTranscript.length - 1];
     const endTime = lastItem.offset + lastItem.duration;
     const sentence = createSentence(
       currentSentence,

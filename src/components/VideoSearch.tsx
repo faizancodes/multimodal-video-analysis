@@ -300,6 +300,52 @@ export function VideoSearch({
         </div>
       )}
 
+      {!isSearching &&
+        hasEmbeddings &&
+        searchResults.length === 0 &&
+        searchQuery.trim() &&
+        !error && (
+          <div className="mt-6 bg-zinc-800/50 border border-zinc-700/50 rounded-2xl p-6 text-center animate-fade-in">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-zinc-700/50 mb-4">
+              <svg
+                className="w-6 h-6 text-zinc-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <h6 className="text-lg font-medium text-zinc-300 mb-2">
+              No Results Found
+            </h6>
+            <p className="text-sm text-zinc-400 max-w-sm mx-auto leading-relaxed mb-4">
+              No visual content matching "
+              <span className="font-medium text-zinc-300">{searchQuery}</span>"
+              was found in this video.
+            </p>
+            <div className="text-xs text-zinc-500 space-y-1">
+              <p>Try searching for:</p>
+              <div className="flex flex-wrap justify-center gap-2 mt-2">
+                <span className="px-2 py-1 bg-zinc-700/30 rounded-md">
+                  Visual elements
+                </span>
+                <span className="px-2 py-1 bg-zinc-700/30 rounded-md">
+                  Objects or people
+                </span>
+                <span className="px-2 py-1 bg-zinc-700/30 rounded-md">
+                  Activities or actions
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
       {searchResults.length > 0 && (
         <div className="mt-6 animate-fade-in">
           <h5 className="text-md font-medium text-zinc-300 mb-4 flex items-center space-x-2">
