@@ -22,6 +22,7 @@ interface FormattedTranscriptItem {
 interface VideoChatProps {
   videoId: string;
   formattedTranscript: FormattedTranscriptItem[];
+  onTimestampClick?: (timestamp: string) => void;
 }
 
 // Utility function to convert timestamp (MM:SS or HH:MM:SS) to seconds
@@ -66,17 +67,25 @@ function formatTimestampForDisplay(timestamp: string): string {
 function MessageContent({
   content,
   videoId,
+  onTimestampClick,
 }: {
   content: string;
   videoId: string;
+  onTimestampClick?: (timestamp: string) => void;
 }) {
   const handleTimestampClick = (timestamp: string) => {
     // Extract start time if it's a range (e.g., "00:02:40-00:02:49" -> "00:02:40")
     const startTime = timestamp.includes("-")
       ? timestamp.split("-")[0]
       : timestamp;
-    const youtubeUrl = getYouTubeUrlWithTimestamp(videoId, startTime);
-    window.open(youtubeUrl, "_blank", "noopener,noreferrer");
+
+    if (onTimestampClick) {
+      onTimestampClick(startTime);
+    } else {
+      // Fallback to opening in new tab
+      const youtubeUrl = getYouTubeUrlWithTimestamp(videoId, startTime);
+      window.open(youtubeUrl, "_blank", "noopener,noreferrer");
+    }
   };
 
   // Regex to match timestamps in format [HH:MM:SS], [MM:SS], or time ranges [HH:MM:SS-HH:MM:SS], [MM:SS-MM:SS]
@@ -124,7 +133,11 @@ function MessageContent({
   return <span className="whitespace-pre-wrap">{parts}</span>;
 }
 
-export function VideoChat({ videoId, formattedTranscript }: VideoChatProps) {
+export function VideoChat({
+  videoId,
+  formattedTranscript,
+  onTimestampClick,
+}: VideoChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -221,6 +234,7 @@ export function VideoChat({ videoId, formattedTranscript }: VideoChatProps) {
                     <MessageContent
                       content={message.content}
                       videoId={videoId}
+                      onTimestampClick={onTimestampClick}
                     />
                   ) : (
                     <span className="whitespace-pre-wrap">

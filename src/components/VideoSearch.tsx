@@ -5,9 +5,14 @@ import { useVideoSearch } from "../hooks/useVideoSearch";
 interface VideoSearchProps {
   videoUrl: string;
   videoId: string;
+  onTimestampClick?: (timestamp: string) => void;
 }
 
-export function VideoSearch({ videoUrl, videoId }: VideoSearchProps) {
+export function VideoSearch({
+  videoUrl,
+  videoId,
+  onTimestampClick,
+}: VideoSearchProps) {
   const {
     searchQuery,
     setSearchQuery,
@@ -20,8 +25,11 @@ export function VideoSearch({ videoUrl, videoId }: VideoSearchProps) {
     generationProgress,
     generateEmbeddings,
     handleSearch,
-    handleTimestampClick,
+    handleTimestampClick: defaultHandleTimestampClick,
   } = useVideoSearch({ videoUrl, videoId });
+
+  // Use passed onTimestampClick prop if available, otherwise use default from hook
+  const handleTimestampClick = onTimestampClick || defaultHandleTimestampClick;
 
   return (
     <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-6">
@@ -163,18 +171,6 @@ export function VideoSearch({ videoUrl, videoId }: VideoSearchProps) {
           </div>
         </div>
       )}
-
-      {hasEmbeddings &&
-        searchResults.length === 0 &&
-        searchQuery &&
-        !isSearching && (
-          <div className="mt-4 text-center py-8">
-            <p className="text-zinc-500 text-sm">
-              No results found for &quot;{searchQuery}&quot;. Try different
-              keywords or lower the similarity threshold.
-            </p>
-          </div>
-        )}
     </div>
   );
 }
