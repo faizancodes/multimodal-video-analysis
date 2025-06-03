@@ -21,17 +21,23 @@ export function VideoUrlForm({
     {
       id: "LSuSb7NFUT8",
       url: "https://www.youtube.com/watch?v=LSuSb7NFUT8",
-      title: "Video 1",
+      title: "WindSurf CEO: From $0 to $3B Exit",
+      description: "Building the future with AI coding agents",
+      thumbnail: `https://img.youtube.com/vi/LSuSb7NFUT8/maxresdefault.jpg`,
     },
     {
       id: "vnkVYLhGd_s",
       url: "https://www.youtube.com/watch?v=vnkVYLhGd_s",
-      title: "Video 2",
+      title: "Mercor CEO on AI's Impact on Jobs",
+      description: "How Mercor is building AI to predict job performance",
+      thumbnail: `https://img.youtube.com/vi/vnkVYLhGd_s/maxresdefault.jpg`,
     },
     {
       id: "eEg5ZjFxMmU",
       url: "https://www.youtube.com/watch?v=eEg5ZjFxMmU",
-      title: "Video 3",
+      title: "Asking Politicians How They Got Wealthy",
+      description: "Interviews with politicians in DC on their career paths",
+      thumbnail: `https://img.youtube.com/vi/eEg5ZjFxMmU/maxresdefault.jpg`,
     },
   ];
 
@@ -161,56 +167,76 @@ export function VideoUrlForm({
       </div>
 
       {!isLoading && !videoUrl.trim() && (
-        <div className="space-y-6">
-          <div className="text-center">
-            <h3 className="text-lg font-medium text-slate-300 mb-2">
-              Or check out these sample videos
+        <div className="space-y-8">
+          <div className="text-center space-y-2">
+            <h3 className="text-xl font-semibold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
+              Or chat with AI about these videos
             </h3>
-            <p className="text-sm text-slate-500">
-              Chat with AI about these videos
+            <p className="text-sm text-slate-400">
+              Choose a video below to start an AI-powered conversation
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {predefinedVideos.map(video => (
+            {predefinedVideos.map((video, index) => (
               <div
                 key={video.id}
-                className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-4 space-y-4"
+                className="group relative bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/[0.08] rounded-2xl overflow-hidden hover:border-white/[0.15] transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-blue-500/10"
+                style={{
+                  animationDelay: `${index * 100}ms`,
+                }}
               >
-                <div className="relative w-full rounded-lg overflow-hidden bg-black/20">
-                  <div style={{ paddingBottom: "56.25%" }} className="relative">
-                    <iframe
-                      src={`https://www.youtube.com/embed/${video.id}`}
-                      title={video.title}
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      className="absolute top-0 left-0 w-full h-full"
-                    />
-                  </div>
+                {/* Gradient overlay for depth */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                {/* Video thumbnail */}
+                <div className="relative w-full aspect-video overflow-hidden">
+                  <img
+                    src={video.thumbnail}
+                    alt={video.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
                 </div>
 
-                <button
-                  onClick={() => handleStartChat(video.id)}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-blue-800 to-purple-800 hover:from-blue-500 hover:to-purple-500 text-white font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent group"
-                >
-                  <div className="flex items-center justify-center space-x-2">
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      />
-                    </svg>
-                    <span>Start Chat</span>
+                {/* Content */}
+                <div className="p-5 space-y-4">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-white text-lg leading-tight line-clamp-2">
+                      {video.title}
+                    </h4>
+                    <p className="text-slate-400 text-sm leading-relaxed line-clamp-2">
+                      {video.description}
+                    </p>
                   </div>
-                </button>
+
+                  <button
+                    onClick={() => handleStartChat(video.id)}
+                    className="relative w-full px-4 py-3 bg-gradient-to-r from-blue-600/80 to-purple-600/80 hover:from-blue-500 hover:to-purple-500 text-white font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-transparent group/btn overflow-hidden backdrop-blur-sm"
+                  >
+                    {/* Button shimmer effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-500" />
+
+                    <div className="relative flex items-center justify-center space-x-2">
+                      <svg
+                        className="w-4 h-4 transition-transform group-hover/btn:scale-110"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                        />
+                      </svg>
+                      <span className="text-sm font-medium">Start Chat</span>
+                    </div>
+                  </button>
+                </div>
               </div>
             ))}
           </div>

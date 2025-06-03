@@ -33,11 +33,7 @@ export default async function Home() {
             </div>
 
             <p className="text-xl text-slate-300 leading-relaxed max-w-3xl mx-auto">
-              Transform your YouTube videos into actionable insights. Our AI
-              extracts <span className="font-medium">transcripts, </span>
-              <span className="font-medium">visual analysis</span>, and{" "}
-              <span className="font-medium">intelligent summaries</span> from
-              any video content.
+              Transform your YouTube videos into actionable insights
             </p>
           </div>
         </div>
