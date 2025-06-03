@@ -23,8 +23,19 @@ export interface VisualDescription {
   endTime: number;
 }
 
+// Interface for the raw description object from AI response
+interface RawDescription {
+  timestamp: string;
+  description: string;
+}
+
+// Interface for the parsed JSON response structure
+interface ParsedVideoResponse {
+  descriptions: RawDescription[];
+}
+
 // Helper function to safely parse JSON with fallback handling
-function safeJsonParse(text: string): any {
+function safeJsonParse(text: string): ParsedVideoResponse {
   // Log the exact text we're trying to parse for debugging
   logger.info("Attempting to parse JSON response", {
     textLength: text.length,
@@ -158,20 +169,24 @@ function safeJsonParse(text: string): any {
 }
 
 // Helper function to validate and sanitize descriptions
-function validateDescriptions(descriptions: any[]): VisualDescription[] {
+function validateDescriptions(descriptions: unknown[]): VisualDescription[] {
   if (!Array.isArray(descriptions)) {
     logger.warn("Descriptions is not an array, returning empty array");
     return [];
   }
 
   return descriptions
-    .filter(desc => {
+    .filter((desc): desc is RawDescription => {
       return (
-        desc &&
-        typeof desc.timestamp === "string" &&
-        typeof desc.description === "string" &&
-        desc.timestamp.trim() !== "" &&
-        desc.description.trim() !== ""
+        desc !== null &&
+        desc !== undefined &&
+        typeof desc === "object" &&
+        "timestamp" in desc &&
+        "description" in desc &&
+        typeof (desc as RawDescription).timestamp === "string" &&
+        typeof (desc as RawDescription).description === "string" &&
+        (desc as RawDescription).timestamp.trim() !== "" &&
+        (desc as RawDescription).description.trim() !== ""
       );
     })
     .map(desc => ({

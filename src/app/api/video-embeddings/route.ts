@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Logger } from "@/utils/logger";
-import {
-  extractVisualDescriptions,
-  type VisualDescription,
-} from "@/utils/videoDescriptionExtractor";
+import { extractVisualDescriptions } from "@/utils/videoDescriptionExtractor";
 import { generateBatchEmbeddings } from "@/utils/embeddingClient";
 import {
   getCachedVideoEmbeddings,
