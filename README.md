@@ -1,18 +1,23 @@
-# Next.js Template
+# Multimodal Video Analysis Tutorial
 
-This is a template repository showcasing Next.js Server Actions, React Server Components, and modern data fetching patterns. The project includes a Todo list implementation and examples of API integration with proper loading states and error handling.
+A comprehensive Next.js application for analyzing YouTube videos using Gemini AI and providing advanced features including transcript analysis, video chat, and natural language visual search.
 
 ## Features
 
-- **Todo List**: Server-side data mutations using Next.js Server Actions
-- **Data Fetching Example**: Demonstrates React Suspense and loading states
+- **YouTube Video Analysis**: Extract and analyze video transcripts with topic timestamps
+- **Video Chat**: Ask questions about video content based on transcripts
+- **Visual Video Search**: Generate embeddings from video snapshots for natural language search
+- **AI-Powered**: Powered by Google's Gemini AI for video understanding
+- **Caching**: Redis-based caching for optimal performance
 - **Modern UI**: Built with Shadcn UI components and Tailwind CSS
-- **Error Handling**: Proper error boundaries and user feedback
-- **Type Safety**: Full TypeScript support
+- **Real-time Processing**: Fast API responses optimized for production
 
 ## Tech Stack
 
-- [Next.js](https://nextjs.org) - React framework
+- [Next.js](https://nextjs.org) - React framework with App Router
+- [Google Gemini AI](https://ai.google.dev/) - Multimodal AI for video understanding
+- [OpenAI Embeddings](https://platform.openai.com/) - Text embeddings for semantic search
+- [Upstash Redis](https://upstash.com/) - Serverless Redis for caching
 - [Shadcn UI](https://ui.shadcn.com/) - Component library
 - [Tailwind CSS](https://tailwindcss.com) - Styling
 - [TypeScript](https://www.typescriptlang.org/) - Type safety
@@ -30,7 +35,14 @@ yarn install
 pnpm install
 ```
 
-3. Set up your environment variables in the `.env` file.
+3. Set up your environment variables in the `.env.local` file:
+
+```bash
+GOOGLE_API_KEY=your_google_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+UPSTASH_REDIS_REST_URL=your_upstash_redis_url
+UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_token
+```
 
 4. Start the development server:
 
@@ -46,10 +58,90 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Project Structure
 
-- `app/page.tsx` - Main page with Todo list implementation
-- `app/example/page.tsx` - Data fetching example with loading states
-- `app/actions/*` - Server Actions for data mutations
-- `components/ui/*` - Shadcn UI components
+- `src/app/page.tsx` - Main application with YouTube video input
+- `src/app/api/video-analysis/` - Video transcript analysis API
+- `src/app/api/video-chat/` - Video content Q&A API
+- `src/app/api/video-embeddings/` - Visual embeddings generation API
+- `src/app/api/video-search/` - Natural language video search API
+- `src/components/VideoChat.tsx` - Chat interface for video questions
+- `src/components/VideoSearch.tsx` - Visual search interface
+- `src/utils/geminiClient.ts` - Gemini AI client configuration
+- `src/utils/embeddingClient.ts` - OpenAI embeddings client
+- `src/utils/redisClient.ts` - Redis caching utilities
+
+## API Endpoints
+
+### POST `/api/video-analysis`
+
+Analyzes YouTube video transcript and extracts topic timestamps.
+
+**Request:**
+
+```json
+{
+  "videoUrl": "https://www.youtube.com/watch?v=VIDEO_ID"
+}
+```
+
+### POST `/api/video-embeddings`
+
+Generates visual embeddings from video frames for search functionality.
+
+**Request:**
+
+```json
+{
+  "videoUrl": "https://www.youtube.com/watch?v=VIDEO_ID",
+  "intervalSeconds": 30
+}
+```
+
+### POST `/api/video-search`
+
+Searches video content using natural language queries.
+
+**Request:**
+
+```json
+{
+  "query": "person writing on whiteboard",
+  "videoUrl": "https://www.youtube.com/watch?v=VIDEO_ID",
+  "minSimilarity": 0.6,
+  "maxResults": 10
+}
+```
+
+### POST `/api/video-chat`
+
+Interactive chat about video content based on transcript.
+
+**Request:**
+
+```json
+{
+  "question": "What is the main topic discussed?",
+  "videoId": "VIDEO_ID",
+  "formattedTranscript": [...],
+  "chatHistory": [...]
+}
+```
+
+## Usage
+
+1. **Enter YouTube URL**: Paste any public YouTube video URL
+2. **Analyze Video**: Extract transcript and generate topic breakdown with timestamps
+3. **Chat with Video**: Ask questions about the video content using the transcript
+4. **Visual Search**: Generate visual embeddings and search for specific visual content
+   - Click "Generate Visual Embeddings" to analyze video frames
+   - Use natural language to search (e.g., "code editor", "diagram", "person presenting")
+   - Click timestamps to jump to relevant moments in the video
+
+## Performance Optimizations
+
+- **Caching**: All transcripts and embeddings are cached in Redis for 30 days
+- **Batch Processing**: Embeddings are generated in batches for efficiency
+- **Fallback Models**: Multiple Gemini models with automatic fallback
+- **Serverless Ready**: Optimized for Vercel and other serverless platforms
 
 ## Learn More
 

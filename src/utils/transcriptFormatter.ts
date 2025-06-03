@@ -75,7 +75,6 @@ export function formatTranscriptIntoSentences(
     let match;
 
     while ((match = sentenceEnders.exec(text)) !== null) {
-      const beforePunctuation = text.substring(0, match.index).trim();
       const afterPunctuation = text
         .substring(match.index + match[0].length)
         .trim();

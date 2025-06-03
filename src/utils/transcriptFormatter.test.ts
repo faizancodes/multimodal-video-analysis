@@ -1,7 +1,6 @@
 import {
   formatTranscriptIntoSentences,
   formatTranscriptWithTimestamps,
-  formatTimestamp,
 } from "./transcriptFormatter";
 
 // Sample data from your example

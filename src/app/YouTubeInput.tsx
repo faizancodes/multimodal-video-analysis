@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SectionBreakdownLoadingSkeleton } from "@/components/section-breakdown-skeleton";
 import { VideoChat } from "@/components/VideoChat";
+import { VideoSearch } from "@/components/VideoSearch";
 
 // Type definitions for the API response
 interface Topic {
@@ -10,11 +11,21 @@ interface Topic {
   timestamp: string;
 }
 
+interface FormattedTranscriptItem {
+  text: string;
+  startTime: number;
+  endTime: number;
+  duration: number;
+  formattedStartTime: string;
+  formattedEndTime: string;
+  lang?: string;
+}
+
 interface AnalysisResponse {
   summary: Topic[];
   videoId: string;
   transcriptLength: number;
-  formattedTranscript?: any[];
+  formattedTranscript?: FormattedTranscriptItem[];
 }
 
 // Utility function to convert timestamp (MM:SS or HH:MM:SS) to seconds
@@ -172,6 +183,9 @@ export function YouTubeInput() {
                 formattedTranscript={analysisData.formattedTranscript}
               />
             )}
+
+            {/* Video Search Interface */}
+            <VideoSearch videoUrl={videoUrl} videoId={analysisData.videoId} />
           </div>
         ) : null}
       </div>

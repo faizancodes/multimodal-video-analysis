@@ -9,9 +9,19 @@ interface ChatMessage {
   timestamp: Date;
 }
 
+interface FormattedTranscriptItem {
+  text: string;
+  startTime: number;
+  endTime: number;
+  duration: number;
+  formattedStartTime: string;
+  formattedEndTime: string;
+  lang?: string;
+}
+
 interface VideoChatProps {
   videoId: string;
-  formattedTranscript: any[];
+  formattedTranscript: FormattedTranscriptItem[];
 }
 
 // Utility function to convert timestamp (MM:SS or HH:MM:SS) to seconds
@@ -189,8 +199,8 @@ export function VideoChat({ videoId, formattedTranscript }: VideoChatProps) {
         {messages.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-zinc-500 text-sm">
-              Ask any question about the video content and I'll help you find
-              the answer based on the transcript.
+              Ask any question about the video content and I&apos;ll help you
+              find the answer based on the transcript.
             </p>
           </div>
         ) : (
