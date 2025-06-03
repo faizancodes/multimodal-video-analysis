@@ -325,8 +325,8 @@ export function VideoSearch({
               No Results Found
             </h6>
             <p className="text-sm text-zinc-400 max-w-sm mx-auto leading-relaxed mb-4">
-              No visual content matching "
-              <span className="font-medium text-zinc-300">{searchQuery}</span>"
+              No visual content matching &quot;
+              <span className="font-medium text-zinc-300">{searchQuery}</span>&quot;
               was found in this video.
             </p>
             <div className="text-xs text-zinc-500 space-y-1">
