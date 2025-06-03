@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Logger } from "@/utils/logger";
-import { extractVisualDescriptions } from "@/utils/videoDescriptionExtractor";
+import {
+  extractVisualDescriptions,
+  type VisualDescription,
+} from "@/utils/videoDescriptionExtractor";
 import { generateBatchEmbeddings } from "@/utils/embeddingClient";
 import {
   getCachedVideoEmbeddings,
@@ -201,7 +204,7 @@ export async function POST(request: NextRequest) {
 // Helper function to cache video descriptions separately
 async function cacheVideoDescriptions(
   videoId: string,
-  descriptions: any[]
+  descriptions: VisualDescription[]
 ): Promise<void> {
   try {
     // This could be useful for debugging or alternative processing

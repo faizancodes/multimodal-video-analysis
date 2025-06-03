@@ -80,7 +80,7 @@ export function MessageContent({
     // Parse text with all formatting
     let lastIndex = 0;
 
-    allMatches.forEach((matchInfo, index) => {
+    allMatches.forEach(matchInfo => {
       const { type, match, content } = matchInfo;
 
       // Add text before this match
