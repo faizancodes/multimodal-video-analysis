@@ -1,27 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { SectionBreakdownLoadingSkeleton } from "@/components/section-breakdown-skeleton";
+import React from "react";
+import { SectionBreakdownLoadingSkeleton } from "@/components/SectionBreakdownSkeleton";
 import { VideoUrlForm } from "@/components/VideoUrlForm";
 import { ErrorDisplay } from "@/components/ErrorDisplay";
 import { AnalysisResults } from "@/components/AnalysisResults";
-import { VideoChat } from "@/components/VideoChat";
+import { TranscriptLoadingIndicator } from "@/components/TranscriptLoadingIndicator";
+import { ChatVideoInterface } from "@/components/ChatVideoInterface";
 import { useVideoAnalysis } from "@/hooks/useVideoAnalysis";
 import { useYouTubePlayer } from "@/hooks/useYouTubePlayer";
-
-import type { FormattedTranscriptItem } from "@/types/video-analysis";
+import { useVideoChatSetup } from "@/hooks/useVideoChatSetup";
 
 export function YouTubeInput() {
-  // Chat-related state
-  const [selectedChatVideo, setSelectedChatVideo] = useState<string | null>(
-    null
-  );
-  const [chatTranscript, setChatTranscript] = useState<
-    FormattedTranscriptItem[] | null
-  >(null);
-  const [isLoadingTranscript, setIsLoadingTranscript] = useState(false);
-  const [transcriptError, setTranscriptError] = useState<string | null>(null);
-
   // Use custom hooks
   const {
     videoUrl,
@@ -33,6 +23,15 @@ export function YouTubeInput() {
     resetAnalysis,
   } = useVideoAnalysis();
 
+  const {
+    selectedChatVideo,
+    chatTranscript,
+    isLoadingTranscript,
+    transcriptError,
+    handleStartChat,
+    handleBackToForm,
+  } = useVideoChatSetup();
+
   const { isPlayerReady, playerRef, seekToTimestamp } = useYouTubePlayer({
     videoId: analysisData?.videoId || selectedChatVideo || undefined,
   });
@@ -40,46 +39,6 @@ export function YouTubeInput() {
   const handleFormSubmit = async () => {
     resetAnalysis();
     await handleSubmit();
-  };
-
-  const handleStartChat = async (videoId: string) => {
-    setIsLoadingTranscript(true);
-    setTranscriptError(null);
-
-    try {
-      // Fetch transcript via API endpoint
-      const response = await fetch("/api/transcript", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ videoId }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch transcript");
-      }
-
-      setChatTranscript(data.transcript);
-      setSelectedChatVideo(videoId);
-    } catch (error) {
-      console.error("Error fetching transcript:", error);
-      setTranscriptError(
-        error instanceof Error
-          ? error.message
-          : "Failed to load transcript for this video"
-      );
-    } finally {
-      setIsLoadingTranscript(false);
-    }
-  };
-
-  const handleBackToForm = () => {
-    setSelectedChatVideo(null);
-    setChatTranscript(null);
-    setTranscriptError(null);
   };
 
   const handleChatTimestampClick = (timestamp: string) => {
@@ -101,84 +60,20 @@ export function YouTubeInput() {
       />
 
       {/* Loading State for Transcript */}
-      {isLoadingTranscript && (
-        <div className="flex items-center justify-center py-8">
-          <div className="flex items-center space-x-3">
-            <svg
-              className="w-6 h-6 animate-spin text-blue-500"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            <span className="text-slate-300">Loading transcript...</span>
-          </div>
-        </div>
-      )}
+      <TranscriptLoadingIndicator isLoading={isLoadingTranscript} />
 
       {/* Transcript Error */}
       {transcriptError && <ErrorDisplay error={transcriptError} />}
 
       {/* Chat Interface for Selected Video */}
-      {selectedChatVideo && chatTranscript && !isLoadingTranscript && (
-        <div className="space-y-6">
-          {/* Video Player for Chat */}
-          <div className="relative bg-gradient-to-br from-white/[0.02] to-white/[0.01] border border-white/[0.08] rounded-3xl p-8 backdrop-blur-sm">
-            <div
-              className="relative w-full rounded-2xl overflow-hidden"
-              style={{ paddingBottom: "56.25%" }}
-            >
-              <div
-                ref={playerRef}
-                className="absolute top-0 left-0 w-full h-full"
-              />
-            </div>
-            {!isPlayerReady && (
-              <div className="mt-6 flex items-center justify-center space-x-2 text-slate-400">
-                <svg
-                  className="w-4 h-4 animate-spin"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                <span className="text-sm">Loading video player...</span>
-              </div>
-            )}
-          </div>
-
-          {/* Chat Component */}
-          <VideoChat
-            videoId={selectedChatVideo}
-            formattedTranscript={chatTranscript}
-            onTimestampClick={handleChatTimestampClick}
-          />
-        </div>
-      )}
+      <ChatVideoInterface
+        selectedChatVideo={selectedChatVideo || ""}
+        chatTranscript={chatTranscript || []}
+        isLoadingTranscript={isLoadingTranscript}
+        playerRef={playerRef}
+        isPlayerReady={isPlayerReady}
+        onTimestampClick={handleChatTimestampClick}
+      />
 
       {/* Results Section for Regular Analysis */}
       {!selectedChatVideo && (
